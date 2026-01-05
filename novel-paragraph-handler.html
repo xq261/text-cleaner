@@ -2,112 +2,232 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>文本正则清洗</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>小说段落清洗工具</title>
+
   <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; }
-    .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    textarea { width: 100%; height: 70vh; padding: 10px; box-sizing: border-box; }
-    .bar { display:flex; gap:8px; align-items:center; margin: 10px 0; flex-wrap: wrap; }
-    button { padding: 8px 10px; }
-    label { display:flex; gap:6px; align-items:center; }
-    .hint { color:#666; font-size: 12px; }
-    @media (max-width: 900px){ .wrap{ grid-template-columns: 1fr; } textarea{ height: 40vh; } }
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --border: #e5e7eb;
+      --primary: #2563eb;
+      --text: #1f2937;
+      --muted: #6b7280;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        "PingFang SC",
+        "Microsoft YaHei",
+        "Noto Sans SC",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--panel);
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+    .desc {
+      margin-bottom: 18px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .toolbar button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .toolbar button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .editor {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .editor {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: #374151;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 60vh;
+      resize: vertical;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 16.5px;
+      line-height: 1.65;
+      color: #111827;
+      background: #fafafa;
+      box-sizing: border-box;
+      outline: none;
+      font-family:
+        "PingFang SC",
+        "Microsoft YaHei",
+        "Noto Sans SC",
+        sans-serif;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+    }
+
+    footer {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
   </style>
 </head>
+
 <body>
-  <h1>文本正则清洗</h1>
-  <div class="hint">所有处理在浏览器本地完成，不上传。</div>
-
-  <div class="bar">
-    <label><input id="optTrim" type="checkbox" checked> 合并多空格</label>
-    <label><input id="optPara" type="checkbox"> 空行保留为段落（双换行）</label>
-    <button id="btnCopy">复制输出</button>
-    <button id="btnClear">清空</button>
-  </div>
-
-  <div class="wrap">
-    <div>
-      <h3>输入</h3>
-      <textarea id="inp" placeholder="在这里粘贴原文..."></textarea>
+  <div class="container">
+    <h1>小说段落清洗工具</h1>
+    <div class="desc">
+      去除断词连字符（-\\n），将换行整理为自然段落。所有处理均在浏览器本地完成。
     </div>
-    <div>
-      <h3>输出</h3>
-      <textarea id="out" readonly placeholder="这里会自动显示处理结果..."></textarea>
+
+    <div class="toolbar">
+      <label>
+        <input id="optTrim" type="checkbox" checked />
+        合并多余空格
+      </label>
+      <label>
+        <input id="optPara" type="checkbox" />
+        保留空行作为段落
+      </label>
+      <button id="btnCopy">复制结果</button>
+      <button id="btnClear">清空</button>
     </div>
+
+    <div class="editor">
+      <div class="panel">
+        <h3>原文</h3>
+        <textarea id="input" placeholder="在这里粘贴原始小说文本..."></textarea>
+      </div>
+      <div class="panel">
+        <h3>处理后</h3>
+        <textarea id="output" readonly placeholder="这里会自动显示处理后的文本..."></textarea>
+      </div>
+    </div>
+
+    <footer>
+      本地处理 · 不上传 · GitHub Pages
+    </footer>
   </div>
 
   <script>
-    const inp = document.getElementById('inp');
-    const out = document.getElementById('out');
-    const optTrim = document.getElementById('optTrim');
-    const optPara = document.getElementById('optPara');
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const optTrim = document.getElementById("optTrim");
+    const optPara = document.getElementById("optPara");
+    const btnCopy = document.getElementById("btnCopy");
+    const btnClear = document.getElementById("btnClear");
 
-    function transform(text) {
-      // 统一换行（兼容 Windows \r\n）
+    function processText(text) {
+      // 统一换行
       let s = text.replace(/\r\n/g, "\n");
 
       // 1) 去掉断词连字符换行
       s = s.replace(/-\n/g, "");
 
       if (optPara.checked) {
-        // 保留空行作为段落：先把 >=2 个换行标记出来
-        s = s.replace(/\n{2,}/g, "\n\n");
-        // 单个换行变空格
+        // 用占位符保留段落
+        const token = "__PARA__";
+        s = s.replace(/\n{2,}/g, token);
         s = s.replace(/\n/g, " ");
-        // 再把段落标记恢复成双换行（用一个不太可能出现的占位符更稳，这里简单处理）
-        // 上面已经把所有 \n 都变空格了，所以此模式需要另一种写法：
-        // 更稳方案：先占位，再替换：
+        s = s.replace(new RegExp(token, "g"), "\n\n");
       } else {
-        // 2) 其余换行变空格
+        // 2) 所有换行变空格
         s = s.replace(/\n/g, " ");
       }
 
       if (optTrim.checked) {
-        // 合并多空格、去首尾空格
         s = s.replace(/[ \t]+/g, " ").trim();
       }
+
       return s;
     }
 
     function update() {
-      // 若启用“保留段落”，用占位符方式避免被覆盖
-      let text = inp.value.replace(/\r\n/g, "\n");
-      text = text.replace(/-\n/g, "");
-
-      if (optPara.checked) {
-        const token = "__PARA__TOKEN__";
-        text = text.replace(/\n{2,}/g, token);
-        text = text.replace(/\n/g, " ");
-        text = text.replace(new RegExp(token, "g"), "\n\n");
-      } else {
-        text = text.replace(/\n/g, " ");
-      }
-
-      if (optTrim.checked) text = text.replace(/[ \t]+/g, " ").trim();
-      out.value = text;
+      output.value = processText(input.value);
     }
 
-    inp.addEventListener('input', update);
-    optTrim.addEventListener('change', update);
-    optPara.addEventListener('change', update);
+    input.addEventListener("input", update);
+    optTrim.addEventListener("change", update);
+    optPara.addEventListener("change", update);
 
-    document.getElementById('btnCopy').addEventListener('click', async () => {
+    btnCopy.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(out.value);
+        await navigator.clipboard.writeText(output.value);
       } catch {
-        out.select();
-        document.execCommand('copy');
+        output.select();
+        document.execCommand("copy");
       }
     });
 
-    document.getElementById('btnClear').addEventListener('click', () => {
-      inp.value = "";
-      out.value = "";
-      inp.focus();
+    btnClear.addEventListener("click", () => {
+      input.value = "";
+      output.value = "";
+      input.focus();
     });
-
-    update();
   </script>
 </body>
 </html>
